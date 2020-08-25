@@ -4,13 +4,14 @@ import numpy.random as rd
 import matplotlib.pyplot as plt
 
 class Neural:
+  # Constructor class must receive a valid database name
   def __init__(self, dbName):
     try:
       with open(dbName) as db:
         csvInput = csv.reader(db, delimiter=',', quotechar='|')
         nRows = sum(1 for line in csvInput)
         db.seek(0)
-        inputs = np.ones(shape=(nRows, 3), dtype=np.double)
+        inputs = np.ones(shape=(nRows, 2), dtype=np.double)
         outputs = np.zeros(shape=(nRows, 3), dtype=np.double)
         i = 0
         for c in csvInput:
@@ -22,35 +23,46 @@ class Neural:
           i = i + 1
         self.inputs = inputs
         self.outputs = outputs
-        self.sizeInputs = len(inputs)
+        self.n = len(inputs)
     except IOError:
       print("Error openning database file: " + str(IOError))
-    
   
-  # def linear_combination(self):
-  #   return np.dot(self.inputs, self.weights) + self.bias
-
-  def calcWeights(self, n, error):
-    temp = weight - (1/n)*lr * error
-    return temp
-
-  def derivative(self, y, d):
-    return (((2*y) - (2*d)) * (y*(1-y)))
-
   def trainning(self, ages = 0, lr = 0.1):
     self.__setWeights()
     for a in range(ages):
-      for i in range(self.sizeInputs):
+      for i in range(self.n):
         # calculating sum with bias
-        comb = np.dot(self.inputs[i],self.weights)
-        exit()
-        y = sigmoid(comb)
-        for j in range(len(weights)):
-          error = derivative(y, self.outputs[i]) * self.inputs[i][j]
-          weights[j] = calcWeights(weights[j], lr, self.sizeInputs, error)
-        error = derivative(y, self.outputs[i])
-        bias = calcWeights(bias, lr, n, error)
-    return weights, bias
+        yCalc = self.__sigmoid(np.dot(self.weights, self.inputs[i])+self.bias)
+        error = self.__calcQuadracticError(yCalc, self.outputs[i], self.inputs[i])
+        errorBias = self.__calcQuadracticErrorBias(yCalc, self.outputs[i])
+        self.weights = self.weights - lr/self.n * error
+        self.bias = self.bias - lr/self.n * errorBias
+    return True
+
+  def __calcQuadracticErrorBias(self, yCalc, y):
+    a = 2*yCalc - 2*y
+    b = yCalc*(1-yCalc)
+    c = (a*b)
+    return c
+  
+  def __calcQuadracticError(self, yCalc, y, x):
+    a = 2*yCalc - 2*y
+    b = yCalc*(1-yCalc)
+    c = (a*b).reshape((1,-1))
+    result = np.matmul(x[None].T, c)
+    return result.T
+    
+  def __derivative(self, y, d):
+    return (((2*y) - (2*d)) * (y*(1-y)))
+    
+  # Define random weights with bias
+  def __setWeights(self):
+    self.weights = rd.uniform(-1,1,[3,2])
+    self.bias = rd.uniform(-1,1,[3])
+  
+  # sigmoid
+  def __sigmoid(self, x):
+    return 1 / (1 + np.exp(-x))
 
   def compare(self, weights, bias):
     # positives rights
@@ -117,11 +129,4 @@ class Neural:
     plt.plot(xx, (w[0] * xx + w[1]), "green")  
     plt.show()
 
-  def __setWeights(self):
-    # Defining random weights with bias
-    self.weights = rd.uniform(-1,1,[3,3])
-    # self.bias = rd.uniform(-1,1,3)
   
-  # sigmoid
-  def __sigmoid(self, x):
-    return 1 / (1 + np.exp(-x))
