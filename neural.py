@@ -12,7 +12,7 @@ class Neural:
         nRows = sum(1 for line in csvInput)
         db.seek(0)
         inputs = np.ones(shape=(nRows, 2), dtype=np.double)
-        outputs = np.zeros(shape=(nRows, 3), dtype=np.double)
+        outputs = np.zeros(shape=(nRows, 5), dtype=np.double)
         i = 0
         for c in csvInput:
           inputs[i][0] = c[0]
@@ -27,25 +27,39 @@ class Neural:
     except IOError:
       print("Error openning database file: " + str(IOError))
   
+  def testDatabase(self, dbName):
+    try:
+      with open(dbName) as db:
+        csvInput = csv.reader(db, delimiter=',', quotechar='|')
+        nRows = sum(1 for line in csvInput)
+        db.seek(0)
+        inputs = np.ones(shape=(nRows, 2), dtype=np.double)
+        outputs = np.zeros(shape=(nRows, 5), dtype=np.double)
+        i = 0
+        for c in csvInput:
+          inputs[i][0] = c[0]
+          inputs[i][1] = c[1]
+          outputs[i][0] = c[2]
+          outputs[i][1] = c[3]
+          outputs[i][2] = c[4]
+          outputs[i][3] = c[5]
+          outputs[i][4] = c[6]
+          i = i + 1
+        self.inputsTest = inputs
+        self.outputsTest = outputs
+        self.nTest = len(inputs)
+    except IOError:
+      print("Error openning database file: " + str(IOError))
+
   def trainning(self, ages = 0, lr = 0.1):
     self.__setWeights()
-    # print(self.weights)
     for a in range(ages):
       for i in range(self.n):
-        # calculating sum with bias
-        # print('weights')
-        # print(self.weights)
-        # print('inputs')
-        # print(self.inputs[i])
-        # print('NpDot: w and inputs')
-        # print(np.dot(self.weights, self.inputs[i]))
-        # exit()
         yCalc = self.__sigmoid(np.dot(self.weights, self.inputs[i])+self.bias)
         error = self.__calcQuadracticError(yCalc, self.outputs[i], self.inputs[i])
         errorBias = self.__calcQuadracticErrorBias(yCalc, self.outputs[i])
         self.weights = self.weights - lr/self.n * error
         self.bias = self.bias - lr/self.n * errorBias
-    # print(self.weights)
     return True
 
   def __calcQuadracticErrorBias(self, yCalc, y):
@@ -66,8 +80,8 @@ class Neural:
     
   # Define random weights with bias
   def __setWeights(self):
-    self.weights = rd.uniform(-1,1,[3,2])
-    self.bias = rd.uniform(-1,1,[3])
+    self.weights = rd.uniform(-1,1,[5,2])
+    self.bias = rd.uniform(-1,1,[5])
   
   # sigmoid
   def __sigmoid(self, x):
@@ -86,8 +100,6 @@ class Neural:
       y = self.__sigmoid(np.dot(self.weights, self.inputs[i])+self.bias)
       for j in range(len(y)):
         y[j] = 1. if y[j] > 0.5 else 0.
-      # print(self.outputs)
-      # exit()
       if(self.outputs[i][0] == 1.):
         if y[0] == self.outputs[i][0]:
           pr = pr + 1
@@ -103,11 +115,21 @@ class Neural:
           nr = nr + 1
         else:
           nw = nw + 1
+      elif self.outputs[i][3] == 1.:
+        if y[3] == self.outputs[i][3]:
+          nr = nr + 1
+        else:
+          nw = nw + 1
+      elif self.outputs[i][4] == 1.:
+        if y[4] == self.outputs[i][4]:
+          nr = nr + 1
+        else:
+          nw = nw + 1
 
     # database positives
-    pN = np.zeros([3])
+    pN = np.zeros([5])
     # database negatives
-    nN = np.zeros([3])
+    nN = np.zeros([5])
     for i in range(len(self.outputs)):
       if self.outputs[i][0] == 1:
         pN[0] = pN[0] + 1
@@ -129,7 +151,7 @@ class Neural:
     accuracy = (pr+nr)/(pr+pw+nr+nw)
     # F1 = 2*(precision*revocation)/(precision+revocation)
     print(" ===== Neural Network =====")
-    print("    w1: " + str(self.weights[0]) + "  w2: " + str(self.weights[1]))
+    # print("    w1: " + str(self.weights[0]) + "  w2: " + str(self.weights[1]))
     print("")
     print("Total: " + str(rights + wrongs))
     print("Rights: " + str(rights) + " Wrongs: " + str(wrongs))
@@ -144,6 +166,88 @@ class Neural:
     print("Accuracy: " + str(accuracy))
     # print("F1: " + str(F1))
     return rights, wrongs
+
+  def compareTest(self):
+    # positives rights
+    pr = 0
+    # positives wrongs
+    pw = 0
+    # negatives rights
+    nr = 0
+    # negatives wrong
+    nw = 0
+    for i in range(len(self.inputsTest)):
+      y = self.__sigmoid(np.dot(self.weights, self.inputsTest[i])+self.bias)
+      for j in range(len(y)):
+        y[j] = 1. if y[j] > 0.5 else 0.
+      if(self.outputsTest[i][0] == 1.):
+        if y[0] == 1:
+          pr = pr + 1
+        else:
+          pw = pw + 1
+      elif self.outputsTest[i][1] == 1.:
+        if y[1] == 1:
+          pr = pr + 1
+        else:
+          pw = pw + 1
+      elif self.outputsTest[i][2] == 1.:
+        if y[2] == 1:
+          pr = pr + 1
+        else:
+          pw = pw + 1
+
+    # database positives
+    pN = np.zeros([3])
+    # database negatives
+    nN = np.zeros([3])
+    for i in range(len(self.outputsTest)):
+      if self.outputsTest[i][0] == 1:
+        pN[0] = pN[0] + 1
+      elif self.outputsTest[i][1] == 1:
+        pN[1] = pN[1] + 1
+      elif self.outputsTest[i][2] == 1:
+        pN[2] = pN[2] + 1
+      if self.outputsTest[i][0] == 0:
+        nN[0] = nN[0] + 1
+      elif self.outputsTest[i][1] == 0:
+        nN[1] = nN[1] + 1
+      elif self.outputsTest[i][2] == 0:
+        nN[2] = nN[2] + 1
+      # nN = nN + 1
+    # print(pr)
+    # print(pw)
+    # print(nr)
+    # print(nw)
+    # print('range: ' + str(len(self.outputsTest[0])))
+    # for j in range(len(self.outputsTest[0])):
+    rights = pr+nr
+    wrongs = pw+nw
+    print('pr: ' + str(pr))
+    print('pw: ' + str(pw))
+    # print(type(pr))
+    # print(type(pw))
+    precision = pr/(pr+pw)
+    revocation = pr/(pr+pw)
+    if j == 1: exit()
+    accuracy = (pr+nr)/(pr+pw+nr+nw)
+    # F1 = 2*(precision*revocation)/(precision+revocation)
+    print("\n\n\n\n++++++++++++++++++\n\n\n\n")
+    print("===== Neural Network =====")
+    # print("    w1: " + str(self.weights[0]) + "  w2: " + str(self.weights[1]))
+    print("")
+    print("Total: " + str(rights + wrongs))
+    print("Rights: " + str(rights) + " Wrongs: " + str(wrongs))
+    # print("Percent rights: " + str((rights/len(inputsTestTest))*100) + "%")
+    print("Positives rights: " + str(pr))
+    print("Positives wrongs: " + str(pw))
+    print("Negatives rights: " + str(nr))
+    print("Negatives wrongs: " + str(nw))
+    print("Precision: " + str(precision))
+    print("Revocation: " + str(revocation))
+    print("Accuracy: " + str(accuracy))
+    # print("F1: " + str(F1))
+    return rights, wrongs
+
 
   def plot_all(self):
     # print(self.outputs[:,0])

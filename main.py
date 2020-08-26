@@ -28,12 +28,14 @@ neural = Neural(dbName)
 # print(neural.outputs)
 
 
-ages = 1000
+ages = 200
 # Learning rate
 lr = 0.1
 neural.trainning(ages, lr)
-neural.compare()
-neural.plot_all()
+neural.testDatabase('database/test/dificil_teste.csv')
+# print(neural.inputsTest)
+neural.compareTest()
+# neural.plot_all()
 # neural.plot_all()
 # print('weights: ' + str(neural.weights))
 # print('bias: ' + str(neural.bias))
