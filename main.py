@@ -32,8 +32,11 @@ ages = 1000
 # Learning rate
 lr = 0.1
 neural.trainning(ages, lr)
-print('weights: ' + str(neural.weights))
-print('bias: ' + str(neural.bias))
+neural.compare()
+neural.plot_all()
+# neural.plot_all()
+# print('weights: ' + str(neural.weights))
+# print('bias: ' + str(neural.bias))
 # rights, wrongs = compare(inputs, outputs, weights, bias)
 
 # plot_all(inputs, outputs, weights)
